@@ -1,0 +1,13 @@
+attrs
+gym
+h5py
+keras
+matplotlib
+numpy
+pillow
+protobuf>=3.0
+pydot-ng
+scipy
+semver
+tensorflow-gpu
+-e .
