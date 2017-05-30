@@ -1,3 +1,5 @@
+'''Pure Tensorflow implementation. Includes Basic Dueling Double DQN and Temporal Attention DQN.'''
+
 from deeprl_prj.policy import *
 from deeprl_prj.objectives import *
 from deeprl_prj.preprocessors import *
@@ -49,7 +51,7 @@ class Qnetwork():
             self.rnn_outputs_tuple, self.rnn_state = tf.nn.bidirectional_dynamic_rnn(\
                 cell_fw=rnn_cell_1, cell_bw=rnn_cell_2, inputs=self.convFlat, dtype=tf.float32, \
                 initial_state_fw=self.state_in_1, initial_state_bw=self.state_in_2, scope=myScope+'_rnn')
-            print "====== len(self.rnn_outputs_tuple), self.rnn_outputs_tuple[0] ", len(self.rnn_outputs_tuple), self.rnn_outputs_tuple[0].get_shape().as_list(), self.rnn_outputs_tuple[1].get_shape().as_list() # [None, 10, 512]
+            # print "====== len(self.rnn_outputs_tuple), self.rnn_outputs_tuple[0] ", len(self.rnn_outputs_tuple), self.rnn_outputs_tuple[0].get_shape().as_list(), self.rnn_outputs_tuple[1].get_shape().as_list() # [None, 10, 512]
             # As we have Bi-LSTM, we have two output, which are not connected. So merge them
             self.rnn_outputs = tf.concat([self.rnn_outputs_tuple[0], self.rnn_outputs_tuple[1]], axis=2)
             # self.rnn_outputs = tf.contrib.layers.fully_connected(tf.contrib.layers.flatten(self.rnn_outputs_double), h_size, activation_fn=None)
@@ -79,7 +81,7 @@ class Qnetwork():
                 self.attention_va = tf.tanh(tf.map_fn(lambda x: tf.matmul(x, self.attention_v), self.rnn_outputs))
                 self.attention_a = tf.nn.softmax(self.attention_va, dim=1)
                 self.rnn = tf.reduce_sum(tf.multiply(self.rnn_outputs, self.attention_a), axis=1)
-        print "========== self.rnn ", self.rnn.get_shape().as_list() #[None, 1024]
+        # print "========== self.rnn ", self.rnn.get_shape().as_list() #[None, 1024]
 
         if args.net_mode == "duel":
             #The output from the recurrent player is then split into separate Value and Advantage streams
@@ -216,7 +218,7 @@ class DQNAgent:
         init = tf.global_variables_initializer()
         self.saver = tf.train.Saver(max_to_keep=2)
         trainables = tf.trainable_variables()
-        print trainables, len(trainables)
+        print(trainables, len(trainables))
         self.targetOps = updateTargetGraph(trainables, self.tau)
 
         config = tf.ConfigProto()
@@ -339,7 +341,7 @@ class DQNAgent:
             loss, _, rnn, attention_v, attention_a = self.sess.run([self.q_network.loss, self.q_network.updateModel, self.q_network.rnn, self.q_network.attention_v, self.q_network.attention_a], \
                         feed_dict={self.q_network.imageIn: states, self.q_network.batch_size:batch_size, \
                         self.q_network.actions: actions, self.q_network.targetQ: target})
-            print attention_a[0]
+            # print(attention_a[0])
         else:
             loss, _, rnn = self.sess.run([self.q_network.loss, self.q_network.updateModel, self.q_network.rnn], \
                         feed_dict={self.q_network.imageIn: states, self.q_network.batch_size:batch_size, \
@@ -448,7 +450,7 @@ class DQNAgent:
                 if t % (self.train_freq * self.target_update_freq) == 0:
                     # self.target_network.set_weights(self.q_network.get_weights())
                     updateTarget(self.targetOps, self.sess)
-                    print "----- Synced."
+                    print("----- Synced.")
                 if t % self.save_freq == 0:
                     self.save_model(idx_episode)
                 if t % (self.eval_freq * self.train_freq) == 0:
@@ -527,7 +529,7 @@ class DQNAgent:
                 # plt.text(0, 1, 'Next state after taking the action %s'%(action), color='black', weight='bold', backgroundcolor='white', fontsize=20)
                 plt.axis('off')
                 plt.savefig('%sattention_ep%d-frame%d.png'%(self.output_path_images, eval_count, episode_frames))
-                print '---- Image saved at: %sattention_ep%d-frame%d.png'%(self.output_path_images, eval_count, episode_frames)
+                print('---- Image saved at: %sattention_ep%d-frame%d.png'%(self.output_path_images, eval_count, episode_frames))
 
             episode_frames += 1
             episode_reward[idx_episode-1] += reward 

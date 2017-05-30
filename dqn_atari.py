@@ -7,8 +7,20 @@ import gym
 from gym import wrappers
 import tensorflow as tf
 
-# from deeprl_prj.dqn_tf_spatialAt import DQNAgent
-from deeprl_prj.dqn_tf import DQNAgent
+# >>>>>>>>>>>>>>>>>>>>>>>>
+# Different implementation of DQNAgent
+# Uncomment the one you want to train and test
+
+# Keras implementation. Includes Basic Dueling Double DQN and Temporal Attention DQN.
+# from deeprl_prj.dqn_keras import DQNAgent
+
+# Pure Tensorflow implementation. Includes Basic Dueling Double DQN and Temporal Attention DQN.
+# from deeprl_prj.dqn_tf_temporalAt import DQNAgent
+
+# Pure Tensorflow implementation. Includes Basic Dueling Double DQN and Spatial Attention DQN.
+from deeprl_prj.dqn_tf_spatialAt import DQNAgent
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<
 
 def get_output_folder(args, parent_dir, env_name, task_name):
     """Return save folder.
@@ -31,7 +43,7 @@ def get_output_folder(args, parent_dir, env_name, task_name):
     """
     if not os.path.exists(parent_dir):
         os.makedirs(parent_dir)
-        print '===== Folder did not exist; creating... %s'%parent_dir
+        print('===== Folder did not exist; creating... %s'%parent_dir)
     experiment_id = 0
     for folder_name in os.listdir(parent_dir):
         if not os.path.isdir(os.path.join(parent_dir, folder_name)):
@@ -48,10 +60,10 @@ def get_output_folder(args, parent_dir, env_name, task_name):
     parent_dir = parent_dir + '-run{}'.format(experiment_id) + '-' + task_name
     if not os.path.exists(parent_dir):
         os.makedirs(parent_dir)
-        print '===== Folder did not exist; creating... %s'%parent_dir
+        print('===== Folder did not exist; creating... %s'%parent_dir)
     else:
-        print '===== Folder exists; delete? %s'%parent_dir
-        raw_input("Press Enter to continue...")
+        print('===== Folder exists; delete? %s'%parent_dir)
+        input("Press Enter to continue...")
         os.system('rm -rf %s/' % (parent_dir))
     os.makedirs(parent_dir+'/videos/')
     os.makedirs(parent_dir+'/images/')
@@ -59,7 +71,7 @@ def get_output_folder(args, parent_dir, env_name, task_name):
 
 def main():
     parser = argparse.ArgumentParser(description='Run DQN on Atari Breakout')
-    parser.add_argument('--env', default='Breakout-v0', help='Atari env name')
+    parser.add_argument('--env', default='Seaquest-v0', help='Atari env name')
     parser.add_argument('-o', '--output', default='./log/', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
     parser.add_argument('--gamma', default=0.99, type=float, help='Discount factor')
@@ -69,7 +81,7 @@ def main():
     parser.add_argument('--final_epsilon', default=0.05, type=float, help='Final exploration probability in epsilon-greedy')
     parser.add_argument('--exploration_steps', default=1000000, type=int, help='Number of steps over which the initial value of epsilon is linearly annealed to its final value')
     parser.add_argument('--num_samples', default=100000000, type=int, help='Number of training samples from the environment in training')
-    parser.add_argument('--num_frames', default=10, type=int, help='Number of frames to feed to Q-Network')
+    parser.add_argument('--num_frames', default=4, type=int, help='Number of frames to feed to Q-Network')
     parser.add_argument('--frame_width', default=84, type=int, help='Resized frame width')
     parser.add_argument('--frame_height', default=84, type=int, help='Resized frame height')
     parser.add_argument('--replay_memory_size', default=1000000, type=int, help='Number of replay memory the agent uses for training')
@@ -82,18 +94,17 @@ def main():
     parser.add_argument('--load_network_path', default='', help='the path to the trained mode file')
     parser.add_argument('--net_mode', default='dqn', help='choose the mode of net, can be linear, dqn, duel')
     parser.add_argument('--max_episode_length', default = 10000, type=int, help = 'max length of each episode')
-    parser.add_argument('--num_episodes_at_test', default = 10, type=int, help='Number of episodes the agent plays at test')
+    parser.add_argument('--num_episodes_at_test', default = 20, type=int, help='Number of episodes the agent plays at test')
     parser.add_argument('--ddqn', default=False, dest='ddqn', action='store_true', help='enable ddqn')
     parser.add_argument('--train', default=True, dest='train', action='store_true', help='Train mode')
     parser.add_argument('--test', dest='train', action='store_false', help='Test mode')
     parser.add_argument('--no_experience', default=False, action='store_true', help='do not use experience replay')
     parser.add_argument('--no_target', default=False, action='store_true', help='do not use target fixing')
     parser.add_argument('--no_monitor', default=False, action='store_true', help='do not record video')
-
     parser.add_argument('--task_name', default='', help='task name')
     parser.add_argument('--recurrent', default=False, dest='recurrent', action='store_true', help='enable recurrent DQN')
     parser.add_argument('--a_t', default=False, dest='a_t', action='store_true', help='enable temporal/spatial attention')
-    parser.add_argument('--global_a_t', default=False, dest='global_a_t', action='store_true', help='enable temporal/spatial attention')
+    parser.add_argument('--global_a_t', default=False, dest='global_a_t', action='store_true', help='enable global temporal attention')
     parser.add_argument('--selector', default=False, dest='selector', action='store_true', help='enable selector for spatial attention')
     parser.add_argument('--bidir', default=False, dest='bidir', action='store_true', help='enable two layer bidirectional lstm')
 

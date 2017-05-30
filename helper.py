@@ -16,8 +16,8 @@ def processState(state1):
 def updateTargetGraph(tfVars,tau):
     total_vars = len(tfVars)
     op_holder = []
-    for idx,var in enumerate(tfVars[0:total_vars/2]):
-        print "copy from %s ===> %s"%(var.op.name, tfVars[idx+total_vars//2].op.name)
+    for idx,var in enumerate(tfVars[0:total_vars//2]):
+        print("copy from %s ===> %s"%(var.op.name, tfVars[idx+total_vars//2].op.name))
         # op_holder.append(tfVars[idx+total_vars//2].assign((var.value()*tau) + ((1-tau)*tfVars[idx+total_vars//2].value())))
         op_holder.append(tfVars[idx+total_vars//2].assign(var.value()))
     return op_holder
@@ -27,11 +27,11 @@ def updateTarget(op_holder,sess):
         sess.run(op)
     total_vars = len(tf.trainable_variables())
     a = tf.trainable_variables()[0].eval(session=sess)
-    b = tf.trainable_variables()[total_vars/2].eval(session=sess)
+    b = tf.trainable_variables()[total_vars//2].eval(session=sess)
     if a.all() == b.all():
-        print "Target Set Success"
+        print("Target Set Success")
     else:
-        print "Target Set Failed"
+        print("Target Set Failed")
         
 #Record performance metrics and episode logs for the Control Center.
 def saveToCenter(i,rList,jList,bufferArray,summaryLength,h_size,sess,mainQN,time_per_step):

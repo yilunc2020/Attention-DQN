@@ -1,5 +1,5 @@
+scikit-image
 attrs
-gym
 h5py
 keras
 matplotlib
@@ -9,5 +9,5 @@ protobuf>=3.0
 pydot-ng
 scipy
 semver
+gym[atari]
 tensorflow-gpu
--e .

@@ -1,0 +1,5 @@
+.DS_store
+*.pyc
+.gitignoregit
+sftp-config.json
+__pychache__

@@ -1,4 +1,4 @@
-'''Main DQN agent'''
+'''Keras DQN Agent implementation. Includes Basic Dueling Double DQN and Temporal Attention DQN.'''
 
 from deeprl_prj.policy import *
 from deeprl_prj.objectives import *
@@ -60,7 +60,7 @@ def create_model(input_shape, num_actions, mode, args, model_name='q_network'): 
                 h3 = Convolution2D(64, (3, 3), strides = 1, activation = "relu", name = "conv3")(h2)
                 context = Flatten(name = "flatten")(h3)
             else:
-                print '>>>> Defining Recurrent Modules...'
+                print('>>>> Defining Recurrent Modules...')
                 input_data_expanded = Reshape((input_shape[0], input_shape[1], input_shape[2], 1), input_shape = input_shape) (input_data)
                 input_data_TimeDistributed = Permute((3, 1, 2, 4), input_shape=input_shape)(input_data_expanded)
                 h1 = TimeDistributed(Convolution2D(32, (8, 8), strides = 4, activation = "relu", name = "conv1"), \
@@ -79,14 +79,14 @@ def create_model(input_shape, num_actions, mode, args, model_name='q_network'): 
                         all_outs = LSTM(512, return_sequences=True, stateful=False, input_shape=(args.num_frames, 512)) (hidden_input)
                     # attention
                     attention = TimeDistributed(Dense(1, activation='tanh'))(all_outs) 
-                    print attention.shape
+                    # print(attention.shape)
                     attention = Flatten()(attention)
                     attention = Activation('softmax')(attention)
                     attention = RepeatVector(512)(attention)
                     attention = Permute([2, 1])(attention)
                     sent_representation = merge([all_outs, attention], mode='mul')
                     context = Lambda(lambda xin: K.sum(xin, axis=-2), output_shape=(512,))(sent_representation)
-                    print context.shape
+                    # print(context.shape)
 
             if mode == "dqn":
                 h4 = Dense(512, activation='relu', name = "fc")(context)

@@ -1,3 +1,5 @@
+'''Pure Tensorflow implementation. Includes Basic Dueling Double DQN and Spatial Attention DQN.'''
+
 from deeprl_prj.policy import *
 from deeprl_prj.objectives import *
 from deeprl_prj.preprocessors import *
@@ -47,11 +49,11 @@ class Qnetwork():
             self.state_in = rnn_cell.zero_state(self.batch_size, tf.float32)
             self.rnn_outputs, self.rnn_state = tf.nn.dynamic_rnn(\
                     inputs=self.convFlat,cell=rnn_cell,dtype=tf.float32,initial_state=self.state_in,scope=myScope+'_rnn')
-            print "======", self.rnn_outputs.get_shape().as_list()
+            # print("======", self.rnn_outputs.get_shape().as_list())
 
             self.rnn_last_output = tf.slice(self.rnn_outputs, [0, num_frames-1, 0], [-1, 1, -1])
             self.rnn = tf.squeeze(self.rnn_last_output, [1])
-            print "==========", self.rnn.get_shape().as_list()
+            # print("==========", self.rnn.get_shape().as_list())
         else:
             self.L = 7*7
             self.D = 64
@@ -63,14 +65,14 @@ class Qnetwork():
 
             self.features = tf.reshape(self.conv3, [self.batch_size, num_frames, self.L, self.D])
             self.features_list = tf.split(self.features, num_frames, axis=1)
-            print len(self.features_list), self.features_list[0].get_shape().as_list() # 10 [None, 1, 49, 64]
+            # print(len(self.features_list), self.features_list[0].get_shape().as_list()) # 10 [None, 1, 49, 64]
             self.alpha_list = []
             lstm_cell = tf.contrib.rnn.BasicLSTMCell(num_units=self.H)
             c, h = self._get_initial_lstm(features=tf.squeeze(self.features_list[0], [1]), myScope=myScope)
 
             for t in range(self.T):
                 features = tf.squeeze(self.features_list[t], [1])
-                features = self._batch_norm(features, mode='train', name=myScope+'conv_features')
+                features = self._batch_norm(features, mode='train', name=myScope+'conv_features', reuse=(t!=0))
                 features_proj = self._project_features(features=features, myScope=myScope, reuse=(t!=0))
                 context, alpha = self._attention_layer(features, features_proj, h, myScope=myScope, reuse=(t!=0))
                 self.alpha_list.append(alpha)
@@ -78,12 +80,12 @@ class Qnetwork():
                 if self.selector:
                     context, beta = self._selector(context, h, myScope=myScope, reuse=(t!=0)) 
 
-                print "========== context ", context.get_shape().as_list()
-                print "========== h ", h.get_shape().as_list()
+                # print("========== context ", context.get_shape().as_list())
+                # print("========== h ", h.get_shape().as_list())
 
                 with tf.variable_scope(myScope+'_lstmCell', reuse=(t!=0)):
                     _, (c, h) = lstm_cell(inputs=tf.concat([context, h], 1), state=[c, h])
-                    print "========== h ", h.get_shape().as_list()
+                    # print("========== h ", h.get_shape().as_list())
 
             self.rnn = h
 
@@ -113,13 +115,14 @@ class Qnetwork():
         self.trainer = tf.train.AdamOptimizer(learning_rate=0.0001)
         self.updateModel = self.trainer.minimize(self.loss)
 
-    def _batch_norm(self, x, mode='train', name=None):
+    def _batch_norm(self, x, mode='train', name=None, reuse=False):
         return tf.contrib.layers.batch_norm(inputs=x, 
                                             decay=0.95,
                                             center=True,
                                             scale=True,
                                             is_training=(mode=='train'),
                                             updates_collections=None,
+                                            reuse=reuse,
                                             scope=(name+'batch_norm'))
 
     def _get_initial_lstm(self, features, myScope):
@@ -264,7 +267,7 @@ class DQNAgent:
         init = tf.global_variables_initializer()
         self.saver = tf.train.Saver(max_to_keep=2)
         trainables = tf.trainable_variables()
-        print trainables, len(trainables)
+        print(trainables, len(trainables))
         self.targetOps = updateTargetGraph(trainables, self.tau)
 
         config = tf.ConfigProto()
@@ -498,7 +501,7 @@ class DQNAgent:
                 if t % (self.train_freq * self.target_update_freq) == 0:
                     # self.target_network.set_weights(self.q_network.get_weights())
                     updateTarget(self.targetOps, self.sess)
-                    print "----- Synced."
+                    print("----- Synced.")
                 if t % self.save_freq == 0:
                     self.save_model(idx_episode)
                 if t % (self.eval_freq * self.train_freq) == 0:
