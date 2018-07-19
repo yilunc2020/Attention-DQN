@@ -49,7 +49,7 @@ def get_output_folder(args, parent_dir, env_name, task_name):
         if not os.path.isdir(os.path.join(parent_dir, folder_name)):
             continue
         try:
-            folder_name = int(folder_name.split('-run')[-1])
+            folder_name = int(folder_name.split('-run')[-1][0])
             if folder_name > experiment_id:
                 experiment_id = folder_name
         except:
